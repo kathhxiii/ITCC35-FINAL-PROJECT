@@ -1,0 +1,151 @@
+:root{
+    --primary-color: #407BFF;
+}
+*{
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    box-sizing: border-box;
+   
+}
+
+.content2{
+    background-image:linear-gradient(rgba(255,255,255), rgba(0,0,0,0.5)), url(bg.jpg);
+    height: 50%;
+    background-size: cover;
+    background-position: center;
+    padding: 25px;
+    text-align: center;
+}
+.ads{
+    background-image:linear-gradient(rgba(155, 227, 255, 0.5),rgba(255,255,255));
+    height: 25vh;
+    background-size: cover;
+    background-position: center;
+    padding: 25px;
+    text-align: center;
+}
+
+ul{
+    float: left;
+    list-style-type: none;
+    margin-top: 25px;
+}
+ul.register{
+    float: right;
+    list-style-type: none;
+}
+
+ul li{
+    display: inline-block;
+}
+
+.main1 a{
+    text-decoration: none;
+    color: black;
+    padding:  5px 15px;
+    transition: 0.6s ease;
+ }
+
+.register a{
+    text-decoration: none;
+    color: black;
+    padding:  5px 15px;
+    border:  1px solid black;
+    transition: 0.6s ease;
+    
+}
+
+ul li a:hover{
+    background-color: rgb(138, 186, 240);
+    color: #fff;
+}
+
+.logo img{
+    float: left;
+    width:  100px;
+    height: 50px;
+}
+
+.main{
+    margin: auto; 
+    background-color: #fff;
+    overflow: hidden;
+    padding: 5px 10px 10px 10px;
+}
+
+.checked {
+    color: orange;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing: border-box;
+}
+.container1 .card .card-in img{
+    width:260px;
+    height:250px;
+    transition: .5s ease;
+
+}
+.container1{
+    display:flex;
+    flex-direction:row;
+    justify-content: center;
+    width:100%;
+    height: 100%;
+    flex-wrap: wrap;
+}
+.container1 .card {
+    position: relative;
+    padding:10px;
+    margin:10px 5px;
+    width:390px;
+    height:500px;
+    text-align: center;
+    background-color: #f3f3f3;
+    transition: .5s ease;
+}
+.container1 .card:hover{
+    background-color: black;
+}
+.container1 .card .card-in{
+    transition: 0.5s ease;
+}
+.container1 .card:hover .card-in{
+    transform: translateY(-250px);
+    color: #fff;
+}
+.container1 .card:hover .card-in img{
+    transform: translateY(450px);
+}
+.container1.card.card-in div{
+    min-height: 150px;
+} 
+.container1.card:hover.card-in div{
+    transform: translateY(-100px);
+}
+.container1.card.card-in div h1{
+    color: var(--primary-color);
+}
+.container {
+    padding: 15px 16px;
+}
+
+.Feedback{
+    padding-top: 8%;
+    padding-bottom: 2%;
+}
+
+.footer {
+    position: relative;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    padding: 15px;
+    background-color: rgb(255, 255, 255);
+    color: rgb(0, 0, 0);
+    text-align: center;
+ }
+ 

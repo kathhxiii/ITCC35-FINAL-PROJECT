@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>watsons map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link
+      href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+  }
+  
+  body {
+    color: #404040;
+    font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1 {
+    font-size: 22px;
+    margin: 0;
+    font-weight: 400;
+    line-height: 20px;
+    padding: 20px 2px;
+  }
+
+  a {
+    color: #404040;
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: #101010;
+  }
+
+  /* The page is split between map and sidebar - the sidebar gets 1/3, map
+  gets 2/3 of the page. You can adjust this to your personal liking. */
+  .sidebar {
+    position: absolute;
+    width: 33.3333%;
+    height: 80%;
+    top: 60px;
+    left: 0;
+    overflow: visible;
+    border-right: 1px solid rgba(0, 0, 0, 0.25);
+  }
+
+  #map {
+    position: absolute;
+    left: 33.3333%;
+    width: 66.6666%;
+    top: 60px;
+    bottom: 0;
+  }
+
+  .heading {
+    background:  rgb(138, 186, 240) ;
+    border-bottom: 1px solid #eee;
+    height: 60px;
+    line-height: 60px;
+    padding: 0 10px;
+    top: 60px;
+  }
+     
+
+    
+
+      #instructions {
+  position: absolute;
+  margin: 20px;
+  width: 25%;
+  top: 0;
+  bottom: 20%;
+  padding: 20px;
+  background-color: rgba(255, 255, 255, 0.9);
+  overflow-y: scroll;
+  font-family: sans-serif;
+  font-size: 0.8em;
+  line-height: 2em;
+      }
+  .marker {
+  background-image: url('hospital.png');
+  background-size: cover;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.markerUser{
+    background-image: url('user.png');
+  background-size: cover;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.mapboxgl-popup {
+max-width: 200px;
+}
+
+.mapboxgl-popup-content {
+text-align: center;
+font-family: 'Open Sans', sans-serif;
+}
+
+
+.duration {
+  font-size: 2em;
+}
+.listings {
+  height: 100%;
+  overflow: auto;
+  padding-bottom: 60px;
+  top:60px;
+}
+
+.listings .item {
+  display: block;
+  border-bottom: 1px solid #eee;
+  padding: 10px;
+  text-decoration: none;
+}
+
+.listings .item:last-child { border-bottom: none; }
+
+.listings .item .title {
+  display: block;
+  color: #4abbb3;
+  font-weight: 700;
+}
+
+.listings .item .title small { font-weight: 400; }
+
+.listings .item.active .title,
+.listings .item .title:hover { color: rgb(138, 186, 240) }
+
+.listings .item.active {
+  background-color: #f8f8f8;
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+  border-left: 0;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-track {
+  background: none;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4abbb3;
+  border-radius: 0;
+}
+
+.clearfix { display: block; }
+
+.clearfix::after {
+  content: '.';
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+    </style>
+  </head>
+  <body>
+    
+	  <div class="main">
+      <div class="logo">
+          <img src="resource/logo.jpg">
+          </div>
+          <ul class="main1">
+              <li><a href="#">Home</a></li>
+              <li><a href="#">About</a></li>
+              <li><a href="pharmacy.html">Pharmacies</a></li>
+              <li><a href="#">Feedback</a></li>
+              <li><a href="#">Medicine</a></li>
+          </ul>
+          <ul class="register">
+              <li><a href="#">Log In</a></li>
+              <li><a href="#">Sign Up</a></li>
+      </ul>
+  </div>
+    <div class="sidebar">
+      <div class="heading">
+        <h1>Pharmacies</h1>
+      </div>
+      <div id="listings" class="listings"></div>
+    </div>
+    <div id="map" class="map"></div>
+
+    <script>
+      /* This will let you use the .remove() function later on */
+      if (!('remove' in Element.prototype)) {
+        Element.prototype.remove = function () {
+          if (this.parentNode) {
+            this.parentNode.removeChild(this);
+          }
+        };
+      }
+
+      mapboxgl.accessToken = 'pk.eyJ1IjoidG9ueTAxIiwiYSI6ImNrcmRiZDY1MDVheWsyem1mbHowbTkxM3QifQ.AUq2g-EcbVWz2LkJ0AHgIA';
+
+      /**
+       * Add the map to the page
+       */
+      var map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v10',
+        center: [124.64467293902972,8.47775312173525],
+        zoom: 18,
+        
+      });
+      map.addControl(new mapboxgl.NavigationControl());
+      var geolocate = new mapboxgl.GeolocateControl();
+      map.addControl(geolocate);
+
+geolocate.on('geolocate', function(e) {
+      var lon = e.coords.longitude;
+      var lat = e.coords.latitude
+      var start = [lon, lat];
+      
+});
+      var start = [ 124.64361963058892,  8.47802337758759];
+
+// this is where the code for the next step will go
+function getRoute(end) {
+  // make a directions request using cycling profile
+  // an arbitrary start will always be the same
+  // only the end or destination will change
+  var start = [ 124.64361963058892,  8.47802337758759];
+  var url = 'https://api.mapbox.com/directions/v5/mapbox/cycling/' + start[0] + ',' + start[1] + ';' + end[0] + ',' + end[1] + '?steps=true&geometries=geojson&access_token=' + mapboxgl.accessToken;
+
+  // make an XHR request https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest
+  var req = new XMLHttpRequest();
+  req.open('GET', url, true);
+  req.onload = function() {
+    var json = JSON.parse(req.response);
+    var data = json.routes[0];
+    var route = data.geometry.coordinates;
+    var geojson = {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: route
+      }
+    };
+    // if the route already exists on the map, reset it using setData
+    if (map.getSource('route')) {
+      map.getSource('route').setData(geojson);
+    } else { // otherwise, make a new request
+      map.addLayer({
+        id: 'route',
+        type: 'line',
+        source: {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: geojson
+            }
+          }
+        },
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#3887be',
+          'line-width': 5,
+          'line-opacity': 0.75
+        }
+      });
+    }
+    // add turn instructions here at the end
+    
+  };
+  req.send();
+}
+ getRoute(start);
+
+
+
+
+// initialize the map canvas to interact with later
+var canvas = map.getCanvasContainer();
+
+var stores = {
+        'type': 'FeatureCollection',
+        'features': [
+          {
+            'type': 'Feature',
+            'geometry': {
+              'type': 'Point',
+              'coordinates': [ 124.64441624668139, 8.478057865277378]
+            },
+            'properties': {
+              'phoneFormatted': '',
+              'phone': '2022347336',
+              'address': 'Corner Cruz Taal, Don Apolinar Velez St',
+              'city': 'Cagayan de Oro City',
+              'place': 'Rose Pharmacy',
+              
+              'postalCode': '9000',
+              'state': 'Cagayan de Oro City'
+            }
+          },
+          {
+            'type': 'Feature',
+            'geometry': {
+              'type': 'Point',
+              'coordinates': [124.64467293902972,8.47775312173525]
+            },
+            'properties': {
+              'phoneFormatted': '(088) 880-8737 / (0908) 813-2194',
+              'phone': '(088) 880-8737 / (0908) 813-2194',
+              'address': 'Don Apolinar Velez Street, Tirso Neri St',
+              'city': 'Cagayan de Oro City',
+              'place': 'Mercury Drugstore',
+              
+              'postalCode': '9000',
+              'state': 'Misamis Oriental'
+            }
+          },
+          {
+            'type': 'Feature',
+            'geometry': {
+              'type': 'Point',
+              'coordinates':  [ 124.6439227201878, 8.477930526108427]
+            },
+            'properties': {
+              'phoneFormatted': '(088) 881 2250',
+              'phone': '(088) 881 2250',
+              'address': 'Tirso Neri St',
+              'city': 'Cagayan de Oro City',
+              'place': 'Rika Drugstore',
+              
+              'postalCode': '9000',
+              'state': 'Misamis Oriental'
+            }
+          },
+          {
+            'type': 'Feature',
+            'geometry': {
+              'type': 'Point',
+              'coordinates':  [ 124.64361963058892,  8.47802337758759]
+      
+            },
+            'properties': {
+              'phoneFormatted': '(202) 337-9338',
+              'phone': '2023379338',
+              'address': '69 Tirso Neri St',
+              'city': 'Cagayan de Oro City',
+              'place': 'Watsons Pharmacy',
+              'postalCode': '9000',
+              'state': 'Misamis Oriental'
+            }
+          },
+          {
+            'type': 'Feature',
+            'geometry': {
+              'type': 'Point',
+              'coordinates': [ 124.64444910369878, 8.478267112624179]
+            },
+            'properties': {
+              'phoneFormatted': '(202) 547-9338',
+              'phone': '2025479338',
+              'address': 'Don Apolinar Velez Street Corner, Cruz Taal',
+              'city': 'Cagayan de Oro City',
+              'place': 'Dynamic Pharmacy',
+              'postalCode': '9000',
+              'state': 'Misamis Oriental'
+            }
+          },
+          {
+            'type': 'Feature',
+            'geometry': {
+              'type': 'Point',
+              'coordinates': [ 124.64240928376898, 8.47832680281269]
+            },
+            'properties': {
+              'address': 'Capistrano St, Tirso Neri St',
+              'city': 'Cagayan de Oro City',
+              'place': 'Southstar Pharmacy',
+              'postalCode': '9000',
+              'state': 'Misamis Oriental'
+            }
+          },
+          {
+            'type': 'Feature',
+            'geometry': {
+              'type': 'Point',
+              'coordinates':[  124.6449751997661,8.477045673818054]
+            },
+            'properties': {
+              'phoneFormatted': '(301) 654-7336',
+              'phone': '3016547336',
+              'address': '4831 Bethesda Ave',
+              
+              'city': 'Cagayan de Oro city',
+              'place': 'Generika Drugstore',
+              'postalCode': '9000',
+              'state': 'Misamis Oriental'
+            }
+          },
+          {
+            'type': 'Feature',
+            'geometry': {
+              'type': 'Point',
+              'coordinates': [124.64398910484978,8.477457978057068]
+            },
+            'properties': {
+              'phoneFormatted': '(571) 203-0082',
+              'phone': '5712030082',
+              'address': 'RN Abejuela St',
+              'city': 'Cagayan de Oro city',
+              'place': 'Generics Pharmacy',
+              'postalCode': '9000',
+              'state': 'Misamis Oriental'
+            }
+          }
+          
+          
+        ]
+      };
+
+      /**
+       * Assign a unique id to each store. You'll use this `id`
+       * later to associate each point on the map with a listing
+       * in the sidebar.
+       */
+      stores.features.forEach(function (store, i) {
+        store.properties.id = i;
+      });
+
+      /**
+       * Wait until the map loads to make changes to the map.
+       */
+      map.on('load', function (e) {
+        /**
+         * This is where your '.addLayer()' used to be, instead
+         * add only the source without styling a layer
+         */
+        map.addSource('places', {
+          'type': 'geojson',
+          'data': stores
+        });
+
+        /**
+         * Add all the things to the page:
+         * - The location listings on the side of the page
+         * - The markers onto the map
+         */
+        buildLocationList(stores);
+        addMarkers();
+      });
+
+      /**
+       * Add a marker to the map for every store listing.
+       **/
+      function addMarkers() {
+        /* For each feature in the GeoJSON object above: */
+        stores.features.forEach(function (marker) {
+          /* Create a div element for the marker. */
+          var el = document.createElement('div');
+          /* Assign a unique `id` to the marker. */
+          el.id = 'marker-' + marker.properties.id;
+          /* Assign the `marker` class to each marker for styling. */
+          el.className = 'marker';
+
+          /**
+           * Create a marker using the div element
+           * defined above and add it to the map.
+           **/
+           new mapboxgl.Marker(el)
+            .setLngLat(marker.geometry.coordinates)
+            .addTo(map);
+
+          
+          /**
+           * Listen to the element and when it is clicked, do three things:
+           * 1. Fly to the point
+           * 2. Close all other popups and display popup for clicked store
+           * 3. Highlight listing in sidebar (and remove highlight for all other listings)
+           **/
+          el.addEventListener('click', function (e) {
+            /* Fly to the point */
+            flyToStore(marker);
+            /* Close all other popups and display popup for clicked store */
+            createPopUp(marker);
+            /* Highlight listing in sidebar */
+            var activeItem = document.getElementsByClassName('active');
+            e.stopPropagation();
+            if (activeItem[0]) {
+              activeItem[0].classList.remove('active');
+            }
+            var listing = document.getElementById(
+              'listing-' + marker.properties.id
+            );
+            listing.classList.add('active');
+          });
+        });
+      }
+
+      /**
+       * Add a listing for each store to the sidebar.
+       **/
+      function buildLocationList(data) {
+        data.features.forEach(function (store, i) {
+          /**
+           * Create a shortcut for `store.properties`,
+           * which will be used several times below.
+           **/
+          var prop = store.properties;
+
+          /* Add a new listing section to the sidebar. */
+          var listings = document.getElementById('listings');
+          var listing = listings.appendChild(document.createElement('div'));
+          /* Assign a unique `id` to the listing. */
+          listing.id = 'listing-' + prop.id;
+          /* Assign the `item` class to each listing for styling. */
+          listing.className = 'item';
+
+          /* Add the link to the individual listing created above. */
+          var link = listing.appendChild(document.createElement('a'));
+          link.href = '#';
+          link.className = 'title';
+          link.id = 'link-' + prop.id;
+          link.innerHTML = prop.place;
+
+          /* Add details to the individual listing. */
+          var details = listing.appendChild(document.createElement('div'));
+          details.innerHTML = prop.address+', '+prop.city;
+          if (prop.phone) {
+            details.innerHTML += ' &middot; ' + prop.phoneFormatted;
+          }
+
+          /**
+           * Listen to the element and when it is clicked, do four things:
+           * 1. Update the `currentFeature` to the store associated with the clicked link
+           * 2. Fly to the point
+           * 3. Close all other popups and display popup for clicked store
+           * 4. Highlight listing in sidebar (and remove highlight for all other listings)
+           **/
+          link.addEventListener('click', function (e) {
+            
+            for (var i = 0; i < data.features.length; i++) {
+              if (this.id === 'link-' + data.features[i].properties.id) {
+                var clickedListing = data.features[i];
+                flyToStore(clickedListing);
+                createPopUp(clickedListing);
+                
+              }
+            }
+            var activeItem = document.getElementsByClassName('active');
+            if (activeItem[0]) {
+              activeItem[0].classList.remove('active');
+            }
+            this.parentNode.classList.add('active');
+          });
+        });
+      }
+
+      /**
+       * Use Mapbox GL JS's `flyTo` to move the camera smoothly
+       * a given center point.
+       **/
+      function flyToStore(currentFeature) {
+        map.flyTo({
+          center: currentFeature.geometry.coordinates,
+          zoom: 19
+        });
+      }
+      map.on('load', function (e) {
+  /* Add the data to your map as a layer */
+  map.addLayer({
+    "id": "locations",
+    "type": "circle",
+    /* Add a GeoJSON source containing place coordinates and information. */
+    "source": {
+      "type": "geojson",
+      "data": geojson
+    }
+  });
+  buildLocationList(geojson);
+});
+  // this is where the code from the next step will go
+  map.on('click', function(e) {
+    
+  var coordsObj = e.lngLat;
+  canvas.style.cursor = '';
+  var coords = Object.keys(coordsObj).map(function(key) {
+    return coordsObj[key];
+  });
+  var end = {
+    type: 'FeatureCollection',
+    features: [{
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'Point',
+        coordinates: coords
+      }
+    }
+    ]
+  };
+  if (map.getLayer('end')) {
+    map.getSource('end').setData(end);
+  } else {
+    end.features.forEach(function(marker) {
+
+// create a HTML element for each feature
+var el1 = document.createElement('div');
+el1.className = 'markerUser';
+var currentMarkers=[];
+// make a marker for each feature and add to the map
+var oneMarker =new mapboxgl.Marker(el1)
+  .setLngLat(marker.geometry.coordinates)
+  .setPopup(new mapboxgl.Popup({ offset: 25 }) // add popups
+    .setHTML('<h3>' + marker.properties.title + '</h3><p>' + marker.properties.description + '</p>'))
+  .addTo(map);
+  currentMarkers.push(oneMarker)
+  if (currentMarkers!==null){
+    for (var i = currentMarkers.length -1;i>0;i--){
+      currentMarkers[i].remove();
+    }
+  }
+  
+});
+  }
+  getRoute(coords);
+});
+      /**
+       * Create a Mapbox GL JS `Popup`.
+       **/
+      function createPopUp(currentFeature) {
+        var popUps = document.getElementsByClassName('mapboxgl-popup');
+        if (popUps[0]) popUps[0].remove();
+        var popup = new mapboxgl.Popup({ closeOnClick: false })
+          .setLngLat(currentFeature.geometry.coordinates)
+          .setHTML(
+            '<h3>'+currentFeature.properties.place+'</h3>' +
+              '<h4>' +
+              currentFeature.properties.address +
+              '</h4>'
+          )
+          .addTo(map);
+      }
+  
+    </script>
+  </body>
+</html>
